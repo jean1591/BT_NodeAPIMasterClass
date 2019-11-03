@@ -18,13 +18,11 @@ router.use("/:bootcampId/courses", courseRouter);
 
 router.route("/radius/:zipcode/:distance").get(getBootcampsInRadius);
 
-router
-	.route('/')
+router.route('/')
 	.get(getBootcamps)
 	.post(createBootcamp);
 
-router
-	.route('/:id')
+router.route('/:id')
 	.get(getBootcamp)
 	.put(updateBootcamp)
 	.delete(deleteBootcamp);
