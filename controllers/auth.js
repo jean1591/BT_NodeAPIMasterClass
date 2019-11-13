@@ -13,13 +13,7 @@ exports.register = asyncHandler(async (req, res, next) => {
         name, email, password, role
     });
 
-    // Create token
-    const token = user.getSignedJwtToken();
-
-    res.status(200).json({
-        success: true,
-        token
-    });
+    sentTokenResponse(user, 200, res);
 });
 
 
@@ -35,24 +29,36 @@ exports.login = asyncHandler(async (req, res, next) => {
     }
 
     // Check for user
-    const user = await User.findOne({ email }).select("+password");
+    const user = await User.findOne({ email }).select("+password"); // Query DB on User collection
 
     if (!user) {
         return next(new ErrorResponse("Invalid credentials", 401));
     }
 
     // Check if passwords matches
-    const isMatched = await user.matchPassword(password)
+    const isMatched = await user.matchPassword(password) // Check in Schema if saved password matched entered password
 
     if (!isMatched) {
         return next(new ErrorResponse("Invalid credentials", 401));
     }
 
+    sentTokenResponse(user, 200, res);
+});
+
+// Get token from model, create cookie and send response
+const sentTokenResponse = (user, statusCode, res) => {
+
     // Create token
     const token = user.getSignedJwtToken();
 
-    res.status(200).json({
-        success: true,
-        token
-    });
-});
+    const options = {
+        expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000),
+        httpOnly: true,
+    }
+
+    if (process.env.NODE_ENV === "production") {
+        options.secure = true;
+    }
+
+    res.status(statusCode).cookie("token", token, options).json({ success: true, token });
+}
